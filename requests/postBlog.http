@@ -1,0 +1,4 @@
+### POST blog
+POST http://localhost:8080/blogs
+Content-Type: text/plain
+###

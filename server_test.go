@@ -79,4 +79,29 @@ func TestBlogsCRUD(t *testing.T) {
 			t.Errorf("Expected to find %q in the response, got %s", newPost, gotBody)
 		}
 	})
+	t.Run("delete a blog post", func(t *testing.T) {
+		blogs = []string{"Blog Post 1", "Blog Post 2", "Blog Post 3"}
+		idToDelete := 1
+		request, _ := http.NewRequest(http.MethodDelete, fmt.Sprintf("/blogs/%d", idToDelete), nil)
+		response := httptest.NewRecorder()
+
+		Server(response, request)
+
+		gotStatus := response.Code
+		wantStatus := http.StatusOK
+
+		if gotStatus != wantStatus {
+			t.Errorf("got status %d, want status %d", gotStatus, wantStatus)
+		}
+
+		//	Check the list to see if was actually deleted
+		getRequest, _ := http.NewRequest(http.MethodGet, "/blogs", nil)
+		getResponse := httptest.NewRecorder()
+
+		Server(getResponse, getRequest)
+
+		if strings.Contains(getResponse.Body.String(), "Blog Post 2") {
+			t.Errorf("Expected record to be deleted, %q is still in the blogs list", "Blog Post 2")
+		}
+	})
 }

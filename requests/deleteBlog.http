@@ -1,0 +1,4 @@
+### Delete a specific blog /blogs/{id}
+DELETE http://localhost:8080/blogs/4
+
+###
