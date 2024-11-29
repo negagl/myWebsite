@@ -105,3 +105,7 @@ func TestBlogsCRUD(t *testing.T) {
 		}
 	})
 }
+
+// TODO: Don't allow to create blogs if title empty.
+// TODO: Return appended record in create
+// TODO: Return deleted record in deletion
