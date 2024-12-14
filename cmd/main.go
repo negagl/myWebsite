@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/negagl/myWebsite/internal/blogs"
 	"net/http"
 )
 
@@ -15,9 +16,19 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/health", healthCheckHandler)
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Welcome to my personal website!")
+	})
+	http.HandleFunc("/health", healthCheckHandler)
+	http.HandleFunc("/blogs", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			blogs.GetBlogs(w, r)
+		case http.MethodPost:
+			blogs.CreateBlog(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
 	})
 
 	fmt.Println("Server is running on http://localhost:8080...")
