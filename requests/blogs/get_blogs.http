@@ -1,4 +1,2 @@
 ### GET all blogs
 GET http://localhost:8080/blogs
-
-###

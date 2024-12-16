@@ -3,6 +3,7 @@ package blogs
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 type Blog struct {
@@ -55,4 +56,27 @@ func CreateBlog(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newBlog)
+}
+
+func GetBlogByID(w http.ResponseWriter, r *http.Request) {
+	// Extract ID from the URL
+	idStr := r.URL.Path[len("/blogs/"):]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid blog ID", http.StatusBadRequest)
+		return
+	}
+
+	// Search for the blog
+	for _, blog := range blogs {
+		if blog.ID == id {
+			w.WriteHeader(http.StatusFound)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(blog)
+			return
+		}
+	}
+
+	// Blog not found
+	http.Error(w, "Blog not found", http.StatusNotFound)
 }

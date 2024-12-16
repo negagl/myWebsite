@@ -1,4 +1,2 @@
 ### GET rootrequest to example server
 GET http://localhost:8080/
-
-###

@@ -16,6 +16,7 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	// Paths
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintln(w, "Welcome to my personal website!")
 	})
@@ -30,7 +31,17 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+	http.HandleFunc("/blogs/", func(w http.ResponseWriter, r *http.Request) {
+		// Only allow GET methods
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			return
+		}
 
+		blogs.GetBlogByID(w, r)
+	})
+
+	// Run server
 	fmt.Println("Server is running on http://localhost:8080...")
 	err := http.ListenAndServe(":8080", nil)
 	if err != nil {

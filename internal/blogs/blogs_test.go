@@ -103,3 +103,45 @@ func TestCreateBlogWithValidations(t *testing.T) {
 		})
 	}
 }
+
+func TestGetBlogByID(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             string
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:           "Blog found",
+			id:             "1",
+			expectedStatus: http.StatusFound,
+			expectedBody:   `{"id":1,"title":"First Blog","content":"This is the first blog post"}`,
+		},
+		{
+			name:           "Blog not found",
+			id:             "99",
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   "Blog not found",
+		},
+	}
+
+	for _, tc := range tests {
+		req, err := http.NewRequest(http.MethodGet, "/blogs/"+tc.id, nil)
+		if err != nil {
+			t.Fatalf("Could not create the request: %v", err)
+		}
+
+		rec := httptest.NewRecorder()
+		handler := http.HandlerFunc(GetBlogByID)
+
+		handler.ServeHTTP(rec, req)
+
+		if rec.Code != tc.expectedStatus {
+			t.Errorf("Unexpected status code: got %d, want %d", rec.Code, tc.expectedStatus)
+		}
+
+		if rec.Body.String() != tc.expectedBody+"\n" {
+			t.Errorf("Unexpected body response: got %q, want %q", rec.Body.String(), tc.expectedBody)
+		}
+	}
+}
