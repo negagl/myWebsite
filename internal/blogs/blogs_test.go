@@ -26,7 +26,7 @@ func TestGetBlogs(t *testing.T) {
 	}
 
 	expected := `[{"id":1,"title":"First Blog","content":"This is the first blog post"}]`
-	if rec.Body.String() != expected {
+	if rec.Body.String() != expected+"\n" {
 		t.Errorf("Unexpected response body: got %s, want %s", rec.Body.String(), expected)
 	}
 }
@@ -49,7 +49,57 @@ func TestCreateBlog(t *testing.T) {
 	}
 
 	expected := `{"id":2,"title":"Second Blog","content":"This is the second blog post"}`
-	if rec.Body.String() != expected {
+	if rec.Body.String() != expected+"\n" {
 		t.Errorf("Unexpected body response: got %s, want %s", rec.Body.String(), expected)
+	}
+}
+
+func TestCreateBlogWithValidations(t *testing.T) {
+	tests := []struct {
+		name           string
+		body           string
+		expectedStatus int
+		expectedError  string
+	}{
+		{
+			name:           "Empty Title",
+			body:           `{"id":3,"title":"","content":"Content"}`,
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  "Title cannot be empty",
+		},
+		{
+			name:           "Empty Content",
+			body:           `{"id":3,"title":"Title","content":""}`,
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  "Content cannot be empty",
+		},
+		{
+			name:           "Duplicated ID",
+			body:           `{"id":1,"title":"Title","content":"Content"}`,
+			expectedStatus: http.StatusBadRequest,
+			expectedError:  "ID must be unique",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodPost, "/blogs", strings.NewReader(tc.body))
+			if err != nil {
+				t.Fatalf("Could not create the request: %v", err)
+			}
+
+			rec := httptest.NewRecorder()
+			handler := http.HandlerFunc(CreateBlog)
+
+			handler.ServeHTTP(rec, req)
+
+			if rec.Code != tc.expectedStatus {
+				t.Errorf("Unexpected status code: got %d, want %d", rec.Code, tc.expectedStatus)
+			}
+
+			if rec.Body.String() != tc.expectedError+"\n" {
+				t.Errorf("Unexpected body response: got %q, want %q", rec.Body.String(), tc.expectedError)
+			}
+		})
 	}
 }
