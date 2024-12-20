@@ -37,6 +37,8 @@ func main() {
 			blogs.GetBlogByID(w, r)
 		case http.MethodDelete:
 			blogs.DeleteBlogByID(w, r)
+		case http.MethodPut:
+			blogs.UpdateBlogByID(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}

@@ -126,23 +126,25 @@ func TestGetBlogByID(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		req, err := http.NewRequest(http.MethodGet, "/blogs/"+tc.id, nil)
-		if err != nil {
-			t.Fatalf("Could not create the request: %v", err)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodGet, "/blogs/"+tc.id, nil)
+			if err != nil {
+				t.Fatalf("Could not create the request: %v", err)
+			}
 
-		rec := httptest.NewRecorder()
-		handler := http.HandlerFunc(GetBlogByID)
+			rec := httptest.NewRecorder()
+			handler := http.HandlerFunc(GetBlogByID)
 
-		handler.ServeHTTP(rec, req)
+			handler.ServeHTTP(rec, req)
 
-		if rec.Code != tc.expectedStatus {
-			t.Errorf("Unexpected status code: got %d, want %d", rec.Code, tc.expectedStatus)
-		}
+			if rec.Code != tc.expectedStatus {
+				t.Errorf("Unexpected status code: got %d, want %d", rec.Code, tc.expectedStatus)
+			}
 
-		if rec.Body.String() != tc.expectedBody+"\n" {
-			t.Errorf("Unexpected body response: got %q, want %q", rec.Body.String(), tc.expectedBody)
-		}
+			if rec.Body.String() != tc.expectedBody+"\n" {
+				t.Errorf("Unexpected body response: got %q, want %q", rec.Body.String(), tc.expectedBody)
+			}
+		})
 	}
 }
 
@@ -168,22 +170,75 @@ func TestDeleteBlogByID(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		req, err := http.NewRequest(http.MethodDelete, "/blogs/"+tc.id, nil)
-		if err != nil {
-			t.Fatalf("Could not create the request: %v", err)
-		}
+		t.Run(tc.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodDelete, "/blogs/"+tc.id, nil)
+			if err != nil {
+				t.Fatalf("Could not create the request: %v", err)
+			}
 
-		rec := httptest.NewRecorder()
-		handler := http.HandlerFunc(DeleteBlogByID)
+			rec := httptest.NewRecorder()
+			handler := http.HandlerFunc(DeleteBlogByID)
 
-		handler.ServeHTTP(rec, req)
+			handler.ServeHTTP(rec, req)
 
-		if rec.Code != tc.expectedStatus {
-			t.Errorf("Unexpected status code: got %d want %d", rec.Code, tc.expectedStatus)
-		}
+			if rec.Code != tc.expectedStatus {
+				t.Errorf("Unexpected status code: got %d want %d", rec.Code, tc.expectedStatus)
+			}
 
-		if rec.Body.String() != tc.expectedBody+"\n" {
-			t.Errorf("Unexpected response body: got %q, want %q", rec.Body.String(), tc.expectedBody)
-		}
+			if rec.Body.String() != tc.expectedBody+"\n" {
+				t.Errorf("Unexpected response body: got %q, want %q", rec.Body.String(), tc.expectedBody)
+			}
+		})
+	}
+}
+
+func TestUpdateBlogByID(t *testing.T) {
+	blogs = []Blog{
+		{ID: 1, Title: "First Blog", Content: "This is the first blog post"},
+	}
+
+	tests := []struct {
+		name             string
+		id               string
+		body             string
+		expectedStatus   int
+		expectedResponse string
+	}{
+		{
+			name:             "Blog found",
+			id:               "1",
+			body:             `{"title":"Third Blog","content":"This is the third blog"}`,
+			expectedStatus:   http.StatusOK,
+			expectedResponse: `{"id":1,"title":"Third Blog","content":"This is the third blog"}`,
+		},
+		{
+			name:             "Blog not found",
+			id:               "99",
+			body:             `{"title":"Third Blog","content":"This is the third blog"}`,
+			expectedStatus:   http.StatusNotFound,
+			expectedResponse: "Blog not found",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodPut, "/blogs/"+tc.id, strings.NewReader(tc.body))
+			if err != nil {
+				t.Fatalf("Could not create the request: %v", err)
+			}
+
+			rec := httptest.NewRecorder()
+			handler := http.HandlerFunc(UpdateBlogByID)
+
+			handler.ServeHTTP(rec, req)
+
+			if rec.Code != tc.expectedStatus {
+				t.Errorf("Unexpected status code: got %d, want %d", rec.Code, tc.expectedStatus)
+			}
+
+			if rec.Body.String() != tc.expectedResponse+"\n" {
+				t.Errorf("Unexpected body response: got %q, want %q", rec.Body.String(), tc.expectedResponse)
+			}
+		})
 	}
 }

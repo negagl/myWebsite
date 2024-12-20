@@ -105,3 +105,46 @@ func DeleteBlogByID(w http.ResponseWriter, r *http.Request) {
 
 	http.Error(w, "Blog not found", http.StatusNotFound)
 }
+
+func UpdateBlogByID(w http.ResponseWriter, r *http.Request) {
+	// Get ID
+	idString := r.URL.Path[len("/blogs/"):]
+	id, err := strconv.Atoi(idString)
+	if err != nil {
+		http.Error(w, "Invalid blog ID", http.StatusBadRequest)
+		return
+	}
+
+	// Decode the body
+	var updatedBody Blog
+	if err := json.NewDecoder(r.Body).Decode(&updatedBody); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Validations
+	if updatedBody.Title == "" {
+		http.Error(w, "Title can't be empty", http.StatusBadRequest)
+		return
+	}
+
+	if updatedBody.Content == "" {
+		http.Error(w, "Content can't be empty", http.StatusBadRequest)
+		return
+	}
+
+	// Look for blog to update
+	for i, blog := range blogs {
+		if blog.ID == id {
+			blogs[i].Title = updatedBody.Title
+			blogs[i].Content = updatedBody.Content
+
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(blogs[i])
+			return
+		}
+	}
+
+	http.Error(w, "Blog not found", http.StatusNotFound)
+}
