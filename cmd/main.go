@@ -32,13 +32,14 @@ func main() {
 		}
 	})
 	http.HandleFunc("/blogs/", func(w http.ResponseWriter, r *http.Request) {
-		// Only allow GET methods
-		if r.Method != http.MethodGet {
+		switch r.Method {
+		case http.MethodGet:
+			blogs.GetBlogByID(w, r)
+		case http.MethodDelete:
+			blogs.DeleteBlogByID(w, r)
+		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
 		}
-
-		blogs.GetBlogByID(w, r)
 	})
 
 	// Run server

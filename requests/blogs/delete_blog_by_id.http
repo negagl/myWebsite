@@ -1,0 +1,5 @@
+### DELETE blog by id
+DELETE http://localhost:8080/blogs/1
+
+### DELETE blog by id NOT FOUND
+DELETE http://localhost:8080/blogs/99

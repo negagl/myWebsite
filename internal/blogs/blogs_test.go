@@ -145,3 +145,45 @@ func TestGetBlogByID(t *testing.T) {
 		}
 	}
 }
+
+func TestDeleteBlogByID(t *testing.T) {
+	tests := []struct {
+		name           string
+		id             string
+		expectedStatus int
+		expectedBody   string
+	}{
+		{
+			name:           "Blog Found",
+			id:             "1",
+			expectedStatus: http.StatusOK,
+			expectedBody:   `{"id":1,"title":"First Blog","content":"This is the first blog post"}`,
+		},
+		{
+			name:           "Blog not found",
+			id:             "99",
+			expectedStatus: http.StatusNotFound,
+			expectedBody:   "Blog not found",
+		},
+	}
+
+	for _, tc := range tests {
+		req, err := http.NewRequest(http.MethodDelete, "/blogs/"+tc.id, nil)
+		if err != nil {
+			t.Fatalf("Could not create the request: %v", err)
+		}
+
+		rec := httptest.NewRecorder()
+		handler := http.HandlerFunc(DeleteBlogByID)
+
+		handler.ServeHTTP(rec, req)
+
+		if rec.Code != tc.expectedStatus {
+			t.Errorf("Unexpected status code: got %d want %d", rec.Code, tc.expectedStatus)
+		}
+
+		if rec.Body.String() != tc.expectedBody+"\n" {
+			t.Errorf("Unexpected response body: got %q, want %q", rec.Body.String(), tc.expectedBody)
+		}
+	}
+}
