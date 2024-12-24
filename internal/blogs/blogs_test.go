@@ -7,6 +7,54 @@ import (
 	"testing"
 )
 
+func TestLogin(t *testing.T) {
+	tests := []struct {
+		name           string
+		body           string
+		expectedStatus int
+		expectedError  string
+	}{
+		{
+			name:           "Valid Credentials",
+			body:           `{"username":"admin","password":"secret"}`,
+			expectedStatus: http.StatusOK,
+			expectedError:  "",
+		},
+		{
+			name:           "Invalid Credentials",
+			body:           `{"username":"wrong","password":"wrong"}`,
+			expectedStatus: http.StatusUnauthorized,
+			expectedError:  "Invalid username or password",
+		},
+		{
+			name:           "Empty Body",
+			body:           "{}",
+			expectedStatus: http.StatusUnauthorized,
+			expectedError:  "Invalid username or password",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodPost, "/login", strings.NewReader(tc.body))
+			if err != nil {
+				t.Fatalf("Could not create the request")
+			}
+
+			rec := httptest.NewRecorder()
+			Login(rec, req)
+
+			if rec.Code != tc.expectedStatus {
+				t.Errorf("Unexpected status code: got %d, want %d", rec.Code, tc.expectedStatus)
+			}
+
+			if tc.expectedError != "" && rec.Body.String() != tc.expectedError+"\n" {
+				t.Errorf("unexpected error: got %q, want %q", rec.Body.String(), tc.expectedError)
+			}
+		})
+	}
+}
+
 func TestGetBlogs(t *testing.T) {
 	// Request
 	req, err := http.NewRequest(http.MethodGet, "/blogs", nil)
@@ -15,10 +63,7 @@ func TestGetBlogs(t *testing.T) {
 	}
 
 	rec := httptest.NewRecorder()
-	handler := http.HandlerFunc(GetBlogs)
-
-	// Execution
-	handler.ServeHTTP(rec, req)
+	GetBlogs(rec, req)
 
 	// Assertions
 	if rec.Code != http.StatusOK {
@@ -32,52 +77,35 @@ func TestGetBlogs(t *testing.T) {
 }
 
 func TestCreateBlog(t *testing.T) {
-	body := `{"id":2,"title":"Second Blog","content":"This is the second blog post"}`
-	req, err := http.NewRequest(http.MethodPost, "/blogs", strings.NewReader(body))
-	if err != nil {
-		t.Fatalf("Could not create the request: %v", err)
-	}
-
-	rec := httptest.NewRecorder()
-	handler := http.HandlerFunc(CreateBlog)
-
-	handler.ServeHTTP(rec, req)
-
-	// Assertions
-	if rec.Code != http.StatusCreated {
-		t.Errorf("Unexpected status code: got %d, want %d", rec.Code, http.StatusCreated)
-	}
-
-	expected := `{"id":2,"title":"Second Blog","content":"This is the second blog post"}`
-	if rec.Body.String() != expected+"\n" {
-		t.Errorf("Unexpected body response: got %s, want %s", rec.Body.String(), expected)
-	}
-}
-
-func TestCreateBlogWithValidations(t *testing.T) {
 	tests := []struct {
 		name           string
 		body           string
 		expectedStatus int
-		expectedError  string
+		expectedBody   string
 	}{
+		{
+			name:           "Created correctly",
+			body:           `{"id":2,"title":"Second Blog","content":"This is the second blog post"}`,
+			expectedStatus: http.StatusCreated,
+			expectedBody:   `{"id":2,"title":"Second Blog","content":"This is the second blog post"}`,
+		},
 		{
 			name:           "Empty Title",
 			body:           `{"id":3,"title":"","content":"Content"}`,
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Title cannot be empty",
+			expectedBody:   "Title cannot be empty",
 		},
 		{
 			name:           "Empty Content",
 			body:           `{"id":3,"title":"Title","content":""}`,
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "Content cannot be empty",
+			expectedBody:   "Content cannot be empty",
 		},
 		{
 			name:           "Duplicated ID",
 			body:           `{"id":1,"title":"Title","content":"Content"}`,
 			expectedStatus: http.StatusBadRequest,
-			expectedError:  "ID must be unique",
+			expectedBody:   "ID must be unique",
 		},
 	}
 
@@ -89,16 +117,14 @@ func TestCreateBlogWithValidations(t *testing.T) {
 			}
 
 			rec := httptest.NewRecorder()
-			handler := http.HandlerFunc(CreateBlog)
-
-			handler.ServeHTTP(rec, req)
+			CreateBlog(rec, req)
 
 			if rec.Code != tc.expectedStatus {
 				t.Errorf("Unexpected status code: got %d, want %d", rec.Code, tc.expectedStatus)
 			}
 
-			if rec.Body.String() != tc.expectedError+"\n" {
-				t.Errorf("Unexpected body response: got %q, want %q", rec.Body.String(), tc.expectedError)
+			if rec.Body.String() != tc.expectedBody+"\n" {
+				t.Errorf("Unexpected body response: got %q, want %q", rec.Body.String(), tc.expectedBody)
 			}
 		})
 	}
@@ -133,9 +159,7 @@ func TestGetBlogByID(t *testing.T) {
 			}
 
 			rec := httptest.NewRecorder()
-			handler := http.HandlerFunc(GetBlogByID)
-
-			handler.ServeHTTP(rec, req)
+			GetBlogByID(rec, req)
 
 			if rec.Code != tc.expectedStatus {
 				t.Errorf("Unexpected status code: got %d, want %d", rec.Code, tc.expectedStatus)
@@ -177,9 +201,7 @@ func TestDeleteBlogByID(t *testing.T) {
 			}
 
 			rec := httptest.NewRecorder()
-			handler := http.HandlerFunc(DeleteBlogByID)
-
-			handler.ServeHTTP(rec, req)
+			DeleteBlogByID(rec, req)
 
 			if rec.Code != tc.expectedStatus {
 				t.Errorf("Unexpected status code: got %d want %d", rec.Code, tc.expectedStatus)
@@ -228,9 +250,7 @@ func TestUpdateBlogByID(t *testing.T) {
 			}
 
 			rec := httptest.NewRecorder()
-			handler := http.HandlerFunc(UpdateBlogByID)
-
-			handler.ServeHTTP(rec, req)
+			UpdateBlogByID(rec, req)
 
 			if rec.Code != tc.expectedStatus {
 				t.Errorf("Unexpected status code: got %d, want %d", rec.Code, tc.expectedStatus)

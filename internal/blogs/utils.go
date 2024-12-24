@@ -1,6 +1,10 @@
 package blogs
 
-import "errors"
+import (
+	"errors"
+	"github.com/golang-jwt/jwt/v5"
+	"time"
+)
 
 // FindBlogByID finds a blog by its ID. Returns the blog and the index if found or -1 if not found.
 func FindBlogByID(id int) (*Blog, int) {
@@ -30,4 +34,17 @@ func ValidateBlog(blog Blog) error {
 	}
 
 	return nil
+}
+
+func generateValidTokenForTest() string {
+	expirationTime := time.Now().Add(15 * time.Minute)
+	claims := &Claims{
+		Username: "admin",
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, _ := token.SignedString(jwtSecret)
+	return tokenString
 }

@@ -2,8 +2,10 @@ package blogs
 
 import (
 	"encoding/json"
+	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 func GetBlogs(w http.ResponseWriter, r *http.Request) {
@@ -111,4 +113,36 @@ func UpdateBlogByID(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(blogs[i])
+}
+
+func Login(w http.ResponseWriter, r *http.Request) {
+	var creds Credentials
+	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	if creds.Username != "admin" || creds.Password != "secret" {
+		http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+		return
+	}
+
+	// Create JWT
+	expirationTime := time.Now().Add(15 * time.Minute)
+	claims := &Claims{
+		Username: creds.Username,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(expirationTime),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString(jwtSecret)
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"token":""` + tokenString + `"}`))
 }
