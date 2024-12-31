@@ -3,6 +3,7 @@ package projects
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -70,6 +71,55 @@ func TestGetProjectByID(t *testing.T) {
 
 			if rec.Body.String() != test.expectedResponse+"\n" {
 				t.Errorf("Unexpected respose body: got %q, want %q", rec.Body.String(), test.expectedResponse)
+			}
+		})
+	}
+}
+
+func TestCreateProject(t *testing.T) {
+	tests := []struct {
+		name             string
+		body             string
+		expectedStatus   int
+		expectedResponse string
+	}{
+		{
+			name:             "Project created correctly",
+			body:             `{"id":2,"title":"New Project","description":"This is a new project","url":"https://github.com/newproject","status":"created"}`,
+			expectedStatus:   http.StatusCreated,
+			expectedResponse: `{"id":2,"title":"New Project","description":"This is a new project","url":"https://github.com/newproject","status":"created"}`,
+		},
+		{
+			name:             "Empty title",
+			body:             `{"id":3,"title":"","description":"This is a new project","url":"https://github.com/newproject","status":"created"}`,
+			expectedStatus:   http.StatusBadRequest,
+			expectedResponse: "Title cannot be empty",
+		},
+		{
+			name:             "Duplicated ID",
+			body:             `{"id":1,"title":"Existing Project","description":"This is a existing project","url":"https://github.com/newproject","status":"created"}`,
+			expectedStatus:   http.StatusBadRequest,
+			expectedResponse: "ID already exists",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodPost, "/projects", strings.NewReader(test.body))
+			if err != nil {
+				t.Fatalf("Could not create the request: %v", err)
+			}
+
+			rec := httptest.NewRecorder()
+
+			CreateProject(rec, req)
+
+			if rec.Code != test.expectedStatus {
+				t.Errorf("Unexpected status code: got %d, want %d", rec.Code, test.expectedStatus)
+			}
+
+			if rec.Body.String() != test.expectedResponse+"\n" {
+				t.Errorf("Unexpected response body: got %q, want %q", rec.Body.String(), test.expectedResponse)
 			}
 		})
 	}

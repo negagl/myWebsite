@@ -3,6 +3,8 @@ SRC = cmd/main.go
 # Output binary
 OUT = bin/myWebsite
 
+.PHONY: clean build test run
+
 # Clean the builds
 clean:
 	rm -f $(OUT)
