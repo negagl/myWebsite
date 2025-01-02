@@ -105,3 +105,26 @@ func UpdateProject(w http.ResponseWriter, r *http.Request) {
 
 	http.Error(w, "Invalid ID", http.StatusNotFound)
 }
+
+func DeleteProject(w http.ResponseWriter, r *http.Request) {
+	idString := r.URL.Path[len("/projects/"):]
+	id, err := strconv.Atoi(idString)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	for i, project := range projects {
+		if project.ID == id {
+			projects = append(projects[:i], projects[i+1:]...)
+
+			if _, err := w.Write([]byte("Project deleted sucessfully\n")); err != nil {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+	}
+
+	http.Error(w, "Project not found", http.StatusNotFound)
+}

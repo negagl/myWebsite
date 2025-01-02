@@ -177,3 +177,52 @@ func TestUpdateProject(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteProject(t *testing.T) {
+	tests := []struct {
+		name             string
+		id               string
+		expectedStatus   int
+		expectedResponse string
+	}{
+		{
+			name:             "Deleted Succesfully",
+			id:               "1",
+			expectedStatus:   http.StatusOK,
+			expectedResponse: "Project deleted sucessfully",
+		},
+		{
+			name:             "ID not found",
+			id:               "99",
+			expectedStatus:   http.StatusNotFound,
+			expectedResponse: "Project not found",
+		},
+		{
+			name:             "Invalid ID",
+			id:               "a",
+			expectedStatus:   http.StatusBadRequest,
+			expectedResponse: "Invalid ID",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodPost, "/projects/"+test.id, nil)
+			if err != nil {
+				t.Fatalf("Could not create the request: %v", err)
+			}
+
+			rec := httptest.NewRecorder()
+
+			DeleteProject(rec, req)
+
+			if rec.Code != test.expectedStatus {
+				t.Errorf("Unexpected status code: got %d, want %d", rec.Code, test.expectedStatus)
+			}
+
+			if test.expectedResponse != "" && rec.Body.String() != test.expectedResponse+"\n" {
+				t.Errorf("Unexpected response body: got %q, want %q", rec.Body.String(), test.expectedResponse)
+			}
+		})
+	}
+}
