@@ -63,3 +63,45 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func UpdateProject(w http.ResponseWriter, r *http.Request) {
+	// Extract the ID
+	idString := r.URL.Path[len("/projects/"):]
+	id, err := strconv.Atoi(idString)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	// Parse the body to an object
+	var projectToUpdate Project
+	if err := json.NewDecoder(r.Body).Decode(&projectToUpdate); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Validations
+	if projectToUpdate.Title == "" {
+		http.Error(w, "Title cannot be empty", http.StatusBadRequest)
+		return
+	}
+
+	// Look for the project, update and retrun
+	for i, project := range projects {
+		if project.ID == id {
+			projects[i].Title = projectToUpdate.Title
+			projects[i].Description = projectToUpdate.Description
+			projects[i].URL = projectToUpdate.URL
+			projects[i].Status = projectToUpdate.Status
+
+			w.Header().Set("Content-Type", "application/json")
+			if err := json.NewEncoder(w).Encode(projects[i]); err != nil {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+	}
+
+	http.Error(w, "Invalid ID", http.StatusNotFound)
+}

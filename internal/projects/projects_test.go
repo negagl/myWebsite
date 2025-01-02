@@ -124,3 +124,56 @@ func TestCreateProject(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateProject(t *testing.T) {
+	tests := []struct {
+		name             string
+		id               string
+		body             string
+		expectedStatus   int
+		expectedResponse string
+	}{
+		{
+			name:             "Valid ID",
+			id:               "1",
+			body:             `{"title":"New title","description":"New description","url":"","status":"on hold"}`,
+			expectedStatus:   http.StatusOK,
+			expectedResponse: `{"id":1,"title":"New title","description":"New description","url":"","status":"on hold"}`,
+		},
+		{
+			name:             "ID doesnt exists",
+			id:               "99",
+			body:             `{"title":"New title","description":"New description","url":"","status":"on hold"}`,
+			expectedStatus:   http.StatusNotFound,
+			expectedResponse: "Invalid ID",
+		},
+		{
+			name:             "Empty Title",
+			id:               "1",
+			body:             `{"title":"","description":"New description","url":"","status":"on hold"}`,
+			expectedStatus:   http.StatusBadRequest,
+			expectedResponse: "Title cannot be empty",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			req, err := http.NewRequest(http.MethodPut, "/projects/"+test.id, strings.NewReader(test.body))
+			if err != nil {
+				t.Fatalf("Could not create teh request: %v", err)
+			}
+
+			rec := httptest.NewRecorder()
+
+			UpdateProject(rec, req)
+
+			if rec.Code != test.expectedStatus {
+				t.Errorf("Unexpected status code: got %d, want %d", rec.Code, test.expectedStatus)
+			}
+
+			if rec.Body.String() != test.expectedResponse+"\n" {
+				t.Errorf("Unexpected response body: got %q, want %q", rec.Body.String(), test.expectedResponse)
+			}
+		})
+	}
+}
