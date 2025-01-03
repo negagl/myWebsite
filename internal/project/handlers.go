@@ -1,10 +1,10 @@
-package projects
+package project
 
 import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/negagl/myWebsite/utils"
+	"github.com/negagl/myWebsite/helpers"
 )
 
 func GetProjects(w http.ResponseWriter, r *http.Request) {
@@ -16,7 +16,7 @@ func GetProjects(w http.ResponseWriter, r *http.Request) {
 
 func GetProjectByID(w http.ResponseWriter, r *http.Request) {
 	// Extract ID
-	id, err := utils.ExtractIDFromPath(w, r, "projects")
+	id, err := helpers.ExtractIDFromPath(w, r, "projects")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -62,7 +62,7 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 
 func UpdateProject(w http.ResponseWriter, r *http.Request) {
 	// Extract the ID
-	id, err := utils.ExtractIDFromPath(w, r, "projects")
+	id, err := helpers.ExtractIDFromPath(w, r, "projects")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -101,7 +101,7 @@ func UpdateProject(w http.ResponseWriter, r *http.Request) {
 
 func DeleteProject(w http.ResponseWriter, r *http.Request) {
 	// Extract ID
-	id, err := utils.ExtractIDFromPath(w, r, "projects")
+	id, err := helpers.ExtractIDFromPath(w, r, "projects")
 	if err != nil {
 		http.Error(w, "Invalid project ID", http.StatusBadRequest)
 		return

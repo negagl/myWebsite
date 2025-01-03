@@ -1,11 +1,12 @@
-package blogs
+package blog
 
 import (
 	"encoding/json"
-	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func GetBlogs(w http.ResponseWriter, r *http.Request) {

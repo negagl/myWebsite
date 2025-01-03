@@ -1,4 +1,4 @@
-package projects
+package project
 
 type Project struct {
 	ID          int    `json:"id"`
