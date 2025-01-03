@@ -26,7 +26,7 @@ func TestCheckHealth(t *testing.T) {
 	}
 
 	expected := `{"status":"ok"}`
-	if rec.Body.String() != expected {
+	if rec.Body.String() != expected+"\n" {
 		t.Errorf("Unexpected body: got %v, want %v", rec.Body.String(), expected)
 	}
 }

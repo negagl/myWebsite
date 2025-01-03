@@ -10,10 +10,10 @@ import (
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	response := map[string]string{"status": "ok"}
-	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	jsonResponse, _ := json.Marshal(response)
-	w.Write(jsonResponse)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 func main() {
