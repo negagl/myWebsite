@@ -201,7 +201,7 @@ func TestDeleteProject(t *testing.T) {
 			name:             "Invalid ID",
 			id:               "a",
 			expectedStatus:   http.StatusBadRequest,
-			expectedResponse: "Invalid ID",
+			expectedResponse: "Invalid project ID",
 		},
 	}
 

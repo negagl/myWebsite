@@ -3,7 +3,8 @@ package projects
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
+
+	"github.com/negagl/myWebsite/utils"
 )
 
 func GetProjects(w http.ResponseWriter, r *http.Request) {
@@ -14,16 +15,16 @@ func GetProjects(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetProjectByID(w http.ResponseWriter, r *http.Request) {
-	idString := r.URL.Path[len("/projects/"):]
-	id, err := strconv.Atoi(idString)
+	// Extract ID
+	id, err := utils.ExtractIDFromPath(w, r, "projects")
 	if err != nil {
 		http.Error(w, "Invalid project ID", http.StatusBadRequest)
 		return
 	}
 
+	// Search Project
 	for _, project := range projects {
 		if project.ID == id {
-			w.WriteHeader(http.StatusOK)
 			w.Header().Set("Content-Type", "application/json")
 			if err := json.NewEncoder(w).Encode(project); err != nil {
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -37,12 +38,14 @@ func GetProjectByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateProject(w http.ResponseWriter, r *http.Request) {
+	// Parse the body
 	var newProject Project
 	if err := json.NewDecoder(r.Body).Decode(&newProject); err != nil {
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 
+	// Validations
 	if newProject.Title == "" {
 		http.Error(w, "Title cannot be empty", http.StatusBadRequest)
 		return
@@ -55,6 +58,7 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Create Project
 	projects = append(projects, newProject)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -66,10 +70,9 @@ func CreateProject(w http.ResponseWriter, r *http.Request) {
 
 func UpdateProject(w http.ResponseWriter, r *http.Request) {
 	// Extract the ID
-	idString := r.URL.Path[len("/projects/"):]
-	id, err := strconv.Atoi(idString)
+	id, err := utils.ExtractIDFromPath(w, r, "projects")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		http.Error(w, "Invalid project ID", http.StatusBadRequest)
 		return
 	}
 
@@ -86,7 +89,7 @@ func UpdateProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Look for the project, update and retrun
+	// Search project, update and retrun
 	for i, project := range projects {
 		if project.ID == id {
 			projects[i].Title = projectToUpdate.Title
@@ -107,15 +110,18 @@ func UpdateProject(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteProject(w http.ResponseWriter, r *http.Request) {
-	idString := r.URL.Path[len("/projects/"):]
-	id, err := strconv.Atoi(idString)
+	// Extract ID
+	id, err := utils.ExtractIDFromPath(w, r, "projects")
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		http.Error(w, "Invalid project ID", http.StatusBadRequest)
 		return
 	}
 
+	// Search project
 	for i, project := range projects {
 		if project.ID == id {
+
+			// Delete project
 			projects = append(projects[:i], projects[i+1:]...)
 
 			if _, err := w.Write([]byte("Project deleted sucessfully\n")); err != nil {
