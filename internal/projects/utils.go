@@ -9,7 +9,7 @@ import (
 func FindProjectByID(id int) (*Project, int, error) {
 	for i, project := range Projects {
 		if project.ID == id {
-			return &project, i, nil
+			return &Projects[i], i, nil
 		}
 	}
 
@@ -31,6 +31,10 @@ func ValidateProject(project Project) error {
 }
 
 func ParseJSONToProject(projectToParse *Project, r *http.Request) error {
+	if r.Body == nil {
+		return errors.New("Request body cannot be empty")
+	}
+
 	if err := json.NewDecoder(r.Body).Decode(&projectToParse); err != nil {
 		return errors.New("Invalid JSON")
 	}

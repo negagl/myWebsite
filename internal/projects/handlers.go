@@ -38,7 +38,7 @@ func GetProjectByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateProject(w http.ResponseWriter, r *http.Request) {
-	// TODO Parse the body
+	// Parse the body
 	var newProject Project
 	if err := ParseJSONToProject(&newProject, r); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -108,19 +108,18 @@ func DeleteProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Search project
-	for i, project := range Projects {
-		if project.ID == id {
-
-			// Delete project
-			Projects = append(Projects[:i], Projects[i+1:]...)
-
-			if _, err := w.Write([]byte("Project deleted sucessfully\n")); err != nil {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return
-			}
-			return
-		}
+	_, i, err := FindProjectByID(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	}
 
-	http.Error(w, "Project not found", http.StatusNotFound)
+	// Delete project
+	Projects = append(Projects[:i], Projects[i+1:]...)
+
+	w.Header().Set("Content-Type", "text/plain")
+	if _, err := w.Write([]byte("Project deleted sucessfully\n")); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
