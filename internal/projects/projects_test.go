@@ -50,7 +50,7 @@ func TestGetProjectByID(t *testing.T) {
 			"Invalid ID",
 			"wrong",
 			http.StatusBadRequest,
-			"Invalid project ID",
+			"Invalid ID",
 		},
 	}
 
@@ -145,7 +145,7 @@ func TestUpdateProject(t *testing.T) {
 			id:               "99",
 			body:             `{"title":"New title","description":"New description","url":"","status":"on hold"}`,
 			expectedStatus:   http.StatusNotFound,
-			expectedResponse: "Invalid ID",
+			expectedResponse: "Project not found",
 		},
 		{
 			name:             "Empty Title",

@@ -8,6 +8,6 @@ type Project struct {
 	Status      string `json:"status"`
 }
 
-var projects = []Project{
+var Projects = []Project{
 	{ID: 1, Title: "Project 1", Description: "This is the first project", URL: "https://github.com/project1", Status: "started"},
 }

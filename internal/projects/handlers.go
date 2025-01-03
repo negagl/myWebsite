@@ -9,7 +9,7 @@ import (
 
 func GetProjects(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(projects); err != nil {
+	if err := json.NewEncoder(w).Encode(Projects); err != nil {
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 }
@@ -18,48 +18,40 @@ func GetProjectByID(w http.ResponseWriter, r *http.Request) {
 	// Extract ID
 	id, err := utils.ExtractIDFromPath(w, r, "projects")
 	if err != nil {
-		http.Error(w, "Invalid project ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Search Project
-	for _, project := range projects {
-		if project.ID == id {
-			w.Header().Set("Content-Type", "application/json")
-			if err := json.NewEncoder(w).Encode(project); err != nil {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return
-			}
-			return
-		}
+	project, _, err := FindProjectByID(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	}
 
-	http.Error(w, "Project not found", http.StatusNotFound)
+	// response
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(project); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
 
 func CreateProject(w http.ResponseWriter, r *http.Request) {
-	// Parse the body
+	// TODO Parse the body
 	var newProject Project
-	if err := json.NewDecoder(r.Body).Decode(&newProject); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
-		return
+	if err := ParseJSONToProject(&newProject, r); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
 	// Validations
-	if newProject.Title == "" {
-		http.Error(w, "Title cannot be empty", http.StatusBadRequest)
+	if err := ValidateProject(newProject); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	for _, project := range projects {
-		if project.ID == newProject.ID {
-			http.Error(w, "ID already exists", http.StatusBadRequest)
-			return
-		}
-	}
-
 	// Create Project
-	projects = append(projects, newProject)
+	Projects = append(Projects, newProject)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	if err := json.NewEncoder(w).Encode(newProject); err != nil {
@@ -72,41 +64,39 @@ func UpdateProject(w http.ResponseWriter, r *http.Request) {
 	// Extract the ID
 	id, err := utils.ExtractIDFromPath(w, r, "projects")
 	if err != nil {
-		http.Error(w, "Invalid project ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Parse the body to an object
 	var projectToUpdate Project
-	if err := json.NewDecoder(r.Body).Decode(&projectToUpdate); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
-		return
+	if err := ParseJSONToProject(&projectToUpdate, r); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 
 	// Validations
-	if projectToUpdate.Title == "" {
-		http.Error(w, "Title cannot be empty", http.StatusBadRequest)
+	if err := ValidateProject(projectToUpdate); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Search project, update and retrun
-	for i, project := range projects {
-		if project.ID == id {
-			projects[i].Title = projectToUpdate.Title
-			projects[i].Description = projectToUpdate.Description
-			projects[i].URL = projectToUpdate.URL
-			projects[i].Status = projectToUpdate.Status
-
-			w.Header().Set("Content-Type", "application/json")
-			if err := json.NewEncoder(w).Encode(projects[i]); err != nil {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-				return
-			}
-			return
-		}
+	project, _, err := FindProjectByID(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
 	}
 
-	http.Error(w, "Invalid ID", http.StatusNotFound)
+	project.Title = projectToUpdate.Title
+	project.Description = projectToUpdate.Description
+	project.URL = projectToUpdate.URL
+	project.Status = projectToUpdate.Status
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(project); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
 }
 
 func DeleteProject(w http.ResponseWriter, r *http.Request) {
@@ -118,11 +108,11 @@ func DeleteProject(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Search project
-	for i, project := range projects {
+	for i, project := range Projects {
 		if project.ID == id {
 
 			// Delete project
-			projects = append(projects[:i], projects[i+1:]...)
+			Projects = append(Projects[:i], Projects[i+1:]...)
 
 			if _, err := w.Write([]byte("Project deleted sucessfully\n")); err != nil {
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
