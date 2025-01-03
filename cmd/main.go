@@ -3,8 +3,9 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/negagl/myWebsite/internal/blogs"
 	"net/http"
+
+	"github.com/negagl/myWebsite/internal/blog"
 )
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
@@ -24,9 +25,9 @@ func main() {
 	http.HandleFunc("/blogs", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			blogs.GetBlogs(w, r)
+			blog.GetBlogs(w, r)
 		case http.MethodPost:
-			blogs.CreateBlog(w, r)
+			blog.CreateBlog(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
@@ -34,11 +35,11 @@ func main() {
 	http.HandleFunc("/blogs/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			blogs.GetBlogByID(w, r)
+			blog.GetBlogByID(w, r)
 		case http.MethodDelete:
-			blogs.DeleteBlogByID(w, r)
+			blog.DeleteBlogByID(w, r)
 		case http.MethodPut:
-			blogs.UpdateBlogByID(w, r)
+			blog.UpdateBlogByID(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}

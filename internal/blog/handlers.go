@@ -3,25 +3,28 @@ package blog
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/negagl/myWebsite/helpers"
 )
 
 func GetBlogs(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(blogs)
+	if err := json.NewEncoder(w).Encode(blogs); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 func CreateBlog(w http.ResponseWriter, r *http.Request) {
+	// parse blog
 	var newBlog Blog
-
-	if err := json.NewDecoder(r.Body).Decode(&newBlog); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	if err := ParseJSONToBlog(&newBlog, r); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	// validations
 	if err := ValidateBlog(newBlog); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -32,79 +35,81 @@ func CreateBlog(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(newBlog)
+	if err := json.NewEncoder(w).Encode(newBlog); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 func GetBlogByID(w http.ResponseWriter, r *http.Request) {
 	// Extract ID from the URL
-	idStr := r.URL.Path[len("/blogs/"):]
-	id, err := strconv.Atoi(idStr)
+	id, err := helpers.ExtractIDFromPath(w, r, "blogs")
 	if err != nil {
-		http.Error(w, "Invalid blog ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Search for the blog
-	blog, _ := FindBlogByID(id)
-	if blog == nil {
-		// Blog not found
-		http.Error(w, "Blog not found", http.StatusNotFound)
+	blog, _, err := FindBlogByID(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
 	w.WriteHeader(http.StatusFound)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(blog)
+	if err := json.NewEncoder(w).Encode(blog); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 func DeleteBlogByID(w http.ResponseWriter, r *http.Request) {
 	// Extract ID from URL
-	idStr := r.URL.Path[len("/blogs/"):]
-	id, err := strconv.Atoi(idStr)
+	id, err := helpers.ExtractIDFromPath(w, r, "blogs")
 	if err != nil {
-		http.Error(w, "Invalid blog ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Search for the blog
-	blog, i := FindBlogByID(id)
-	if blog == nil {
-		http.Error(w, "Blog not found", http.StatusNotFound)
+	blog, i, err := FindBlogByID(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
 	blogs = append(blogs[:i], blogs[i+1:]...)
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(blog)
+	if err := json.NewEncoder(w).Encode(blog); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 func UpdateBlogByID(w http.ResponseWriter, r *http.Request) {
 	// Get ID
-	idString := r.URL.Path[len("/blogs/"):]
-	id, err := strconv.Atoi(idString)
+	id, err := helpers.ExtractIDFromPath(w, r, "blogs")
 	if err != nil {
-		http.Error(w, "Invalid blog ID", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Decode the body
+	// parse the body
 	var updatedBody Blog
-	if err := json.NewDecoder(r.Body).Decode(&updatedBody); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+	if err := ParseJSONToBlog(&updatedBody, r); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	// Validate blog
+	// Validations
 	if err := ValidateBlog(updatedBody); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// Update blog
-	_, i := FindBlogByID(id)
-	if i == -1 {
-		http.Error(w, "Blog not found", http.StatusNotFound)
+	_, i, err := FindBlogByID(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
@@ -113,7 +118,9 @@ func UpdateBlogByID(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(blogs[i])
+	if err := json.NewEncoder(w).Encode(blogs[i]); err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -145,5 +152,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"token":""` + tokenString + `"}`))
+	if _, err := w.Write([]byte(`{"token":""` + tokenString + `"}`)); err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
 }
