@@ -198,30 +198,8 @@ Blog not found
 
 ---
 
-## **Setup**
-
-### **1. Prerequisites**
-- Go installed (version 1.19 or higher).
-
-### **2. Clone the repository**
-```bash
-git clone https://github.com/yourusername/yourrepository.git
-cd yourrepository
-```
-
-### **3. Run the server**
-```bash
-go run cmd/main.go
-```
-
-### **4. Test the API**
-Use tools like `curl`, Postman, or any HTTP client to test the API endpoints.
-
----
-
 ## **Future Improvements**
 - Add authentication for admin-level access.
-- Extend the API to include project management.
 - Improve error handling with custom middleware.
 
 ---
