@@ -1,15 +1,14 @@
+
 # Personal Website API
 
-This project is a personal website API built in Go, designed to manage blogs. It demonstrates a full CRUD implementation using modular and clean code practices.
+This project is a personal website API built in Go, designed to manage blogs and projects. It demonstrates a full CRUD implementation using modular and clean code practices.
 
 ---
 
 ## **Features**
-- List all blogs.
-- Retrieve a blog by its ID.
-- Create a new blog with validations.
-- Update an existing blog.
-- Delete a blog by its ID.
+- Manage blogs and projects with full CRUD operations.
+- Modular and reusable code.
+- Clean and well-structured architecture.
 
 ---
 
@@ -159,6 +158,46 @@ Blog not found
 
 ---
 
+### **6. CRUD for Projects**
+
+#### **Endpoints**
+
+1. **`GET /projects`**
+   Retrieve a list of all projects.
+   ```bash
+   curl -X GET http://localhost:8080/projects
+   ```
+
+2. **`GET /projects/{id}`**
+   Retrieve a specific project by its ID.
+   ```bash
+   curl -X GET http://localhost:8080/projects/1
+   ```
+
+3. **`POST /projects`**
+   Create a new project with a request body.
+   ```bash
+   curl -X POST -H "Content-Type: application/json" \
+   -d '{"id": 1, "title": "Project Name", "description": "Project Description", "url": "https://example.com", "status": "in progress"}' \
+   http://localhost:8080/projects
+   ```
+
+4. **`PUT /projects/{id}`**
+   Update an existing project by its ID.
+   ```bash
+   curl -X PUT -H "Content-Type: application/json" \
+   -d '{"title": "Updated Project Name", "description": "Updated Description", "url": "https://example.com", "status": "completed"}' \
+   http://localhost:8080/projects/1
+   ```
+
+5. **`DELETE /projects/{id}`**
+   Delete a project by its ID.
+   ```bash
+   curl -X DELETE http://localhost:8080/projects/1
+   ```
+
+---
+
 ## **Setup**
 
 ### **1. Prerequisites**
@@ -187,5 +226,5 @@ Use tools like `curl`, Postman, or any HTTP client to test the API endpoints.
 
 ---
 
-## **Final notes**
-This project is still in development. It's going to be a website where i'm going to be posting all of my projects and advances.
+## **Final Notes**
+This project is still in development. It's going to be a website where I'm going to be posting all of my projects and advances.

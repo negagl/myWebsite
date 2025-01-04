@@ -1,8 +1,0 @@
-### GET blog by ID
-GET http://localhost:8080/blogs/1
-
-### Method not allowed
-POST http://localhost:8080/blogs/2
-
-### Record not found
-GET http://localhost:8080/blogs/2
