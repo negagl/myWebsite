@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -18,11 +19,30 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func loadTemplate(name string, data map[string]string, w http.ResponseWriter) {
+	basetemplate := "web/templates/base.html"
+	pathname := "web/templates/" + name + ".html"
+	tmpl, err := template.ParseFiles(basetemplate, pathname)
+	if err != nil {
+		fmt.Printf("Could not load %q template\n", pathname)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	if err := tmpl.Execute(w, data); err != nil {
+		fmt.Printf("Could not execute %q template\n", pathname)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+}
+
 func main() {
 	r := chi.NewRouter()
 
+	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static"))))
+
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "Welcome to my personal website!")
+		loadTemplate("index", nil, w)
 	})
 
 	r.Get("/health", healthCheckHandler)

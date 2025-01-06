@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="/static/css/tailwind.css" rel="stylesheet">
+  <title>{{ .Title }}</title>
+</head>
+
+<body class="bg-gray-100 text-gray-800">
+  <header class="bg-blue-500 text-white p-4">
+    <h1 class="text-center text-xl font-bold">{{ .Header }}</h1>
+  </header>
+  <main class="container mx-auto mt-8">
+    {{ block "content" . }}{{ end }}
+  </main>
+  <footer class="bg-gray-800 text-white p-4 text-center mt-8">
+    <p>&copy; 2025 My Personal Website</p>
+  </footer>
+</body>
+
+</html>
