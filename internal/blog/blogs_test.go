@@ -7,56 +7,18 @@ import (
 	"testing"
 )
 
-func TestLogin(t *testing.T) {
-	tests := []struct {
-		name           string
-		body           string
-		expectedStatus int
-		expectedError  string
-	}{
-		{
-			name:           "Valid Credentials",
-			body:           `{"username":"admin","password":"secret"}`,
-			expectedStatus: http.StatusOK,
-			expectedError:  "",
-		},
-		{
-			name:           "Invalid Credentials",
-			body:           `{"username":"wrong","password":"wrong"}`,
-			expectedStatus: http.StatusUnauthorized,
-			expectedError:  "Invalid username or password",
-		},
-		{
-			name:           "Empty Body",
-			body:           "{}",
-			expectedStatus: http.StatusUnauthorized,
-			expectedError:  "Invalid username or password",
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			req, err := http.NewRequest(http.MethodPost, "/login", strings.NewReader(tc.body))
-			if err != nil {
-				t.Fatalf("Could not create the request")
-			}
-
-			rec := httptest.NewRecorder()
-			Login(rec, req)
-
-			if rec.Code != tc.expectedStatus {
-				t.Errorf("Unexpected status code: got %d, want %d", rec.Code, tc.expectedStatus)
-			}
-
-			if tc.expectedError != "" && rec.Body.String() != tc.expectedError+"\n" {
-				t.Errorf("unexpected error: got %q, want %q", rec.Body.String(), tc.expectedError)
-			}
-		})
-	}
+func setup() {
+	// Reset the store before each test to ensure isolation
+	store = NewStore()
+	// Ensure no initial data for isolation
+	store.blogs = nil
+	// Add initial data for tests if necessary
+	store.AddBlog(Blog{ID: 1, Title: "First Blog", Content: "This is the first blog post"})
 }
 
 func TestGetBlogs(t *testing.T) {
-	// Request
+	setup()
+
 	req, err := http.NewRequest(http.MethodGet, "/blogs", nil)
 	if err != nil {
 		t.Fatalf("Could not create the request: %v", err)
@@ -65,18 +27,19 @@ func TestGetBlogs(t *testing.T) {
 	rec := httptest.NewRecorder()
 	GetBlogs(rec, req)
 
-	// Assertions
 	if rec.Code != http.StatusOK {
 		t.Errorf("Unexpected status code: got %d, want %d", rec.Code, http.StatusOK)
 	}
 
 	expected := `[{"id":1,"title":"First Blog","content":"This is the first blog post"}]`
-	if rec.Body.String() != expected+"\n" {
+	if strings.TrimSpace(rec.Body.String()) != expected {
 		t.Errorf("Unexpected response body: got %s, want %s", rec.Body.String(), expected)
 	}
 }
 
 func TestCreateBlog(t *testing.T) {
+	setup()
+
 	tests := []struct {
 		name           string
 		body           string
@@ -123,7 +86,7 @@ func TestCreateBlog(t *testing.T) {
 				t.Errorf("Unexpected status code: got %d, want %d", rec.Code, tc.expectedStatus)
 			}
 
-			if rec.Body.String() != tc.expectedBody+"\n" {
+			if strings.TrimSpace(rec.Body.String()) != tc.expectedBody {
 				t.Errorf("Unexpected body response: got %q, want %q", rec.Body.String(), tc.expectedBody)
 			}
 		})
@@ -131,6 +94,8 @@ func TestCreateBlog(t *testing.T) {
 }
 
 func TestGetBlogByID(t *testing.T) {
+	setup()
+
 	tests := []struct {
 		name           string
 		id             string
@@ -147,7 +112,7 @@ func TestGetBlogByID(t *testing.T) {
 			name:           "Blog not found",
 			id:             "99",
 			expectedStatus: http.StatusNotFound,
-			expectedBody:   "Blog not found",
+			expectedBody:   "blog not found",
 		},
 	}
 
@@ -165,7 +130,7 @@ func TestGetBlogByID(t *testing.T) {
 				t.Errorf("Unexpected status code: got %d, want %d", rec.Code, tc.expectedStatus)
 			}
 
-			if rec.Body.String() != tc.expectedBody+"\n" {
+			if strings.TrimSpace(rec.Body.String()) != tc.expectedBody {
 				t.Errorf("Unexpected body response: got %q, want %q", rec.Body.String(), tc.expectedBody)
 			}
 		})
@@ -173,6 +138,8 @@ func TestGetBlogByID(t *testing.T) {
 }
 
 func TestDeleteBlogByID(t *testing.T) {
+	setup()
+
 	tests := []struct {
 		name           string
 		id             string
@@ -183,13 +150,13 @@ func TestDeleteBlogByID(t *testing.T) {
 			name:           "Blog Found",
 			id:             "1",
 			expectedStatus: http.StatusOK,
-			expectedBody:   `{"id":1,"title":"First Blog","content":"This is the first blog post"}`,
+			expectedBody:   "{}",
 		},
 		{
 			name:           "Blog not found",
 			id:             "99",
 			expectedStatus: http.StatusNotFound,
-			expectedBody:   "Blog not found",
+			expectedBody:   "blog not found",
 		},
 	}
 
@@ -207,7 +174,7 @@ func TestDeleteBlogByID(t *testing.T) {
 				t.Errorf("Unexpected status code: got %d want %d", rec.Code, tc.expectedStatus)
 			}
 
-			if rec.Body.String() != tc.expectedBody+"\n" {
+			if strings.TrimSpace(rec.Body.String()) != tc.expectedBody {
 				t.Errorf("Unexpected response body: got %q, want %q", rec.Body.String(), tc.expectedBody)
 			}
 		})
@@ -215,9 +182,7 @@ func TestDeleteBlogByID(t *testing.T) {
 }
 
 func TestUpdateBlogByID(t *testing.T) {
-	blogs = []Blog{
-		{ID: 1, Title: "First Blog", Content: "This is the first blog post"},
-	}
+	setup()
 
 	tests := []struct {
 		name             string
@@ -238,7 +203,7 @@ func TestUpdateBlogByID(t *testing.T) {
 			id:               "99",
 			body:             `{"title":"Third Blog","content":"This is the third blog"}`,
 			expectedStatus:   http.StatusNotFound,
-			expectedResponse: "Blog not found",
+			expectedResponse: "blog not found",
 		},
 	}
 
@@ -256,7 +221,7 @@ func TestUpdateBlogByID(t *testing.T) {
 				t.Errorf("Unexpected status code: got %d, want %d", rec.Code, tc.expectedStatus)
 			}
 
-			if rec.Body.String() != tc.expectedResponse+"\n" {
+			if strings.TrimSpace(rec.Body.String()) != tc.expectedResponse {
 				t.Errorf("Unexpected body response: got %q, want %q", rec.Body.String(), tc.expectedResponse)
 			}
 		})

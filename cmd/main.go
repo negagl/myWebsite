@@ -5,11 +5,22 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/negagl/myWebsite/internal/blog"
-	"github.com/negagl/myWebsite/internal/project"
 )
+
+var templates = template.Must(template.New("").ParseFiles(
+	"web/templates/base.html",
+	"web/templates/components/header.html",
+	"web/templates/components/footer.html",
+	"web/templates/index.html",
+	"web/templates/blogs.html",
+))
+
+func init() {
+	// Show loaded templates
+	for _, tmpl := range templates.Templates() {
+		fmt.Println("Template loaded:", tmpl.Name())
+	}
+}
 
 func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	response := map[string]string{"status": "ok"}
@@ -19,55 +30,20 @@ func healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func loadTemplate(name string, data map[string]string, w http.ResponseWriter) {
-	basetemplate := "web/templates/base.html"
-	pathname := "web/templates/" + name + ".html"
-	tmpl, err := template.ParseFiles(basetemplate, pathname)
+func renderTemplate(w http.ResponseWriter, tmpl string) {
+	err := templates.ExecuteTemplate(w, "base.html", nil)
 	if err != nil {
-		fmt.Printf("Could not load %q template\n", pathname)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
-	}
-
-	if err := tmpl.Execute(w, data); err != nil {
-		fmt.Printf("Could not execute %q template\n", pathname)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func main() {
-	r := chi.NewRouter()
-
-	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static"))))
-
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		loadTemplate("index", nil, w)
-	})
-
-	r.Get("/health", healthCheckHandler)
-
-	r.Route("/blogs", func(r chi.Router) {
-		r.Get("/", blog.GetBlogs)
-		r.Get("/{id}", blog.GetBlogByID)
-		r.Post("/", blog.CreateBlog)
-		r.Put("/{id}", blog.UpdateBlogByID)
-		r.Delete("/{id}", blog.DeleteBlogByID)
-	})
-
-	r.Route("/projects", func(r chi.Router) {
-		r.Get("/", project.GetProjects)
-		r.Get("/{id}", project.GetProjectByID)
-		r.Post("/", project.CreateProject)
-		r.Put("/{id}", project.UpdateProject)
-		r.Delete("/{id}", project.DeleteProject)
-	})
+	// Config reouter
+	r := NewRouter()
 
 	// Run server
 	fmt.Println("Server is running on http://localhost:8080...")
-	err := http.ListenAndServe(":8080", r)
-	if err != nil {
-		fmt.Println("There was an error starting the server")
-		return
+	if err := http.ListenAndServe(":8080", r); err != nil {
+		fmt.Println("There was an error starting the server:", err)
 	}
 }
